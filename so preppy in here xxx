@@ -1,0 +1,803 @@
+-- ========================================================
+--   ☆ DEVY COQUETTE BLUE ☆  |  Cursor • Sky • Fog • Themes
+--   + Chococat, Star Perplexo, White Star, Teal Star, Purple Bow
+-- ========================================================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+local font = Font.new("rbxasset://fonts/families/Starborn.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+
+-- ===== PALETA =====
+local BLUE         = Color3.fromRGB(160, 200, 240)
+local BLUE_DARK    = Color3.fromRGB(90, 150, 220)
+local BLUE_LIGHT   = Color3.fromRGB(215, 235, 252)
+local WHITE        = Color3.fromRGB(255, 255, 255)
+local TEXT_DARK    = Color3.fromRGB(55, 90, 140)
+local TEXT_WHITE   = Color3.fromRGB(255, 255, 255)
+
+local cinnamorollId = "rbxassetid://130820173728340"
+
+-- ===== CURSOR =====
+local cursorSize = 32
+local currentCursorId = "rbxassetid://131843855435385"
+local DefaultImages = {"rbxasset://textures/MouseLockedCursor.png","rbxasset://textures/MouseLockedCursor@2x.png"}
+local ShiftlockObjects = {}
+
+local Cursors = {
+    {Name="White",Id="rbxassetid://131843855435385"},
+    {Name="Purple",Id="rbxassetid://105227484929270"},
+    {Name="Dark Red",Id="rbxassetid://70807381747714"},
+    {Name="Black",Id="rbxassetid://134411152875782"},
+    {Name="Pink",Id="rbxassetid://101446374921049"},
+    {Name="Blue",Id="rbxassetid://94640444703376"},
+    {Name="Green",Id="rbxassetid://112063814299010"},
+    {Name="Teal",Id="rbxassetid://105472303240225"},
+    {Name="Hot Pink",Id="rbxassetid://120423063723029"},
+    {Name="Red",Id="rbxassetid://93953005352303"},
+    {Name="Mocha",Id="rbxassetid://123066282804999"},
+    {Name="Cinnamoroll",Id="rbxassetid://130820173728340"},
+    {Name="Blue Diamond",Id="rbxassetid://86867462006638"},
+    {Name="Red Diamond",Id="rbxassetid://92104309771570"},
+    {Name="Red Star",Id="rbxassetid://93839976680281"},
+    {Name="Orange",Id="rbxassetid://132782590439670"},
+    {Name="Kuromi",Id="rbxassetid://94422136876896"},
+    {Name="Hello Kitty",Id="rbxassetid://124324922920553"},
+    {Name="Hello Kitty Bow",Id="rbxassetid://120839586609926"},
+    {Name="Apple Jack",Id="rbxassetid://105737560480211"},
+    {Name="Chococat",Id="rbxthumb://type=Asset&id=118126832694865&w=150&h=150"},
+    {Name="Star Perplexo",Id="rbxthumb://type=Asset&id=130225909042821&w=150&h=150"},
+    {Name="White Star",Id="rbxthumb://type=Asset&id=91945747069689&w=150&h=150"},
+    {Name="Teal Star",Id="rbxthumb://type=Asset&id=92452799913309&w=150&h=150"},
+    {Name="Purple Bow",Id="rbxthumb://type=Asset&id=88548312898815&w=150&h=150"}
+}
+
+local function ScanShiftLock()
+    ShiftlockObjects = {}
+    for _,v in pairs(game:GetDescendants()) do
+        if v:IsA("ImageLabel") or v:IsA("ImageButton") then
+            if table.find(DefaultImages, v.Image) or string.find(string.lower(v.Name), "shift") or string.find(string.lower(v.Name), "lock") then
+                table.insert(ShiftlockObjects, v)
+            end
+        end
+    end
+end
+
+local function ApplyCursor()
+    for _,v in pairs(ShiftlockObjects) do
+        if v and v.Parent then
+            v.Image = currentCursorId
+            v.Size = UDim2.new(0, cursorSize, 0, cursorSize)
+            v.ImageTransparency = (cursorSize == 0) and 1 or 0
+            v.BackgroundTransparency = 1
+            v.ScaleType = Enum.ScaleType.Fit
+        end
+    end
+end
+
+game.DescendantAdded:Connect(function(v)
+    task.wait(1)
+    if v:IsA("ImageLabel") or v:IsA("ImageButton") then
+        if table.find(DefaultImages, v.Image) or string.find(string.lower(v.Name), "shift") or string.find(string.lower(v.Name), "lock") then
+            table.insert(ShiftlockObjects, v)
+            ApplyCursor()
+        end
+    end
+end)
+ScanShiftLock()
+
+-- ===== SKY =====
+local function ClearSkies()
+    for _,v in ipairs(Lighting:GetChildren()) do
+        if v:IsA("Sky") then v:Destroy() end
+    end
+end
+
+local function SetCustom6Sky(t)
+    ClearSkies()
+    local sky = Instance.new("Sky")
+    sky.Name = "CustomSky"
+    sky.SkyboxBk = t.Bk; sky.SkyboxDn = t.Dn; sky.SkyboxFt = t.Ft
+    sky.SkyboxLf = t.Lf; sky.SkyboxRt = t.Rt; sky.SkyboxUp = t.Up
+    sky.Parent = Lighting
+    return sky
+end
+
+-- ===== FOG =====
+local fogValue = 30
+local fogMax = 1000
+local fogDrag = false
+local names = {"PINK","RED","BLUE","PURPLE","GREEN","WHITE","BLACK"}
+local colors = {
+    Color3.fromRGB(255,105,180), Color3.fromRGB(255,0,0), Color3.fromRGB(0,191,255),
+    Color3.fromRGB(148,0,211), Color3.fromRGB(50,205,50), Color3.fromRGB(255,255,255),
+    Color3.fromRGB(0,0,0)
+}
+local cIdx = 1
+
+-- ===== THEMES =====
+local THEMES = {
+    {name="Blue Pearls",       id=131085071782233},
+    {name="Beabadoobee",       id=136644785070226},
+    {name="Cherry Blossom",    id=138359319564488},
+    {name="Blue Buttons",      id=91575723799982},
+    {name="Blue Coquette",     id=97281525936588},
+    {name="Lana Del Rey",      id=104097010983088},
+    {name="Ariana Grande",     id=74690442278073},
+    {name="Sabrina Carpenter", id=100188834991611},
+    {name="Frank Ocean",       id=119186798070496},
+    {name="Pink Pantheress",   id=104097010983088}
+}
+
+local function themeImg(id)
+    return "rbxthumb://type=Asset&id=" .. tostring(id) .. "&w=420&h=420"
+end
+
+-- ========================================================
+--   GUI
+-- ========================================================
+local gui = Instance.new("ScreenGui")
+gui.Name = "DevyCoquetteBlue"
+gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.IgnoreGuiInset = true
+gui.DisplayOrder = 999
+gui.Parent = player:WaitForChild("PlayerGui")
+
+-- ===== BOLINHA =====
+local toggle = Instance.new("TextButton")
+toggle.Size = UDim2.new(0, 55, 0, 55)
+toggle.Position = UDim2.new(0, 20, 0.5, 0)
+toggle.BackgroundColor3 = BLUE
+toggle.Text = ""
+toggle.AutoButtonColor = false
+toggle.Active = true
+toggle.ZIndex = 10
+toggle.Parent = gui
+Instance.new("UICorner", toggle).CornerRadius = UDim.new(1, 0)
+local toggleStroke = Instance.new("UIStroke", toggle)
+toggleStroke.Color = BLUE_DARK
+toggleStroke.Thickness = 2
+
+local toggleImg = Instance.new("ImageLabel")
+toggleImg.Size = UDim2.new(0.82, 0, 0.82, 0)
+toggleImg.Position = UDim2.new(0.09, 0, 0.09, 0)
+toggleImg.BackgroundTransparency = 1
+toggleImg.Image = cinnamorollId
+toggleImg.ScaleType = Enum.ScaleType.Fit
+toggleImg.ZIndex = 11
+toggleImg.Parent = toggle
+
+-- ===== PAINEL =====
+local panel = Instance.new("Frame")
+panel.Size = UDim2.new(0, 540, 0, 420)
+panel.Position = UDim2.new(0.5, -270, 0.5, -210)
+panel.BackgroundColor3 = WHITE
+panel.BorderSizePixel = 0
+panel.Visible = false
+panel.Active = true
+panel.ClipsDescendants = true
+panel.ZIndex = 5
+panel.Parent = gui
+Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 18)
+local panelStroke = Instance.new("UIStroke", panel)
+panelStroke.Color = BLUE_DARK
+panelStroke.Thickness = 2
+
+local bg = Instance.new("ImageLabel")
+bg.Name = "Background"
+bg.Size = UDim2.new(1, 0, 1, 0)
+bg.BackgroundTransparency = 1
+bg.Image = themeImg(THEMES[1].id)
+bg.ImageTransparency = 0.25
+bg.ScaleType = Enum.ScaleType.Crop
+bg.ZIndex = 0
+bg.Parent = panel
+Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 18)
+
+-- ===== HEADER =====
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1, 0, 0, 50)
+header.BackgroundColor3 = BLUE
+header.BackgroundTransparency = 0.15
+header.BorderSizePixel = 0
+header.ZIndex = 3
+header.Active = false
+header.Parent = panel
+Instance.new("UICorner", header).CornerRadius = UDim.new(0, 18)
+local headerMask = Instance.new("Frame")
+headerMask.Size = UDim2.new(1, 0, 0, 25)
+headerMask.Position = UDim2.new(0, 0, 1, -25)
+headerMask.BackgroundColor3 = BLUE
+headerMask.BackgroundTransparency = 0.15
+headerMask.BorderSizePixel = 0
+headerMask.ZIndex = 3
+headerMask.Parent = header
+
+local headerIcon = Instance.new("ImageLabel")
+headerIcon.Size = UDim2.new(0, 30, 0, 30)
+headerIcon.Position = UDim2.new(0, 16, 0.5, -15)
+headerIcon.BackgroundTransparency = 1
+headerIcon.Image = cinnamorollId
+headerIcon.ScaleType = Enum.ScaleType.Fit
+headerIcon.ZIndex = 4
+headerIcon.Parent = header
+
+local titleLbl = Instance.new("TextLabel")
+titleLbl.Size = UDim2.new(1, -110, 1, 0)
+titleLbl.Position = UDim2.new(0, 54, 0, 0)
+titleLbl.BackgroundTransparency = 1
+titleLbl.FontFace = font
+titleLbl.Text = "☆ Devy Coquette Blue ☆"
+titleLbl.TextColor3 = TEXT_WHITE
+titleLbl.TextSize = 16
+titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+titleLbl.ZIndex = 4
+titleLbl.Parent = header
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 32, 0, 32)
+closeBtn.Position = UDim2.new(1, -42, 0, 9)
+closeBtn.BackgroundColor3 = WHITE
+closeBtn.Text = "✕"
+closeBtn.FontFace = font
+closeBtn.TextSize = 16
+closeBtn.TextColor3 = BLUE_DARK
+closeBtn.AutoButtonColor = false
+closeBtn.ZIndex = 4
+closeBtn.Parent = header
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(1, 0)
+
+closeBtn.MouseButton1Click:Connect(function()
+    panel.Visible = false
+    toggle.Visible = true
+end)
+
+-- ===== DRAG TOTAL =====
+local dragging = false
+local dragStart, startPos
+
+local function isInteractive(obj)
+    return obj:IsA("TextButton")
+        or obj:IsA("ImageButton")
+        or obj:IsA("TextBox")
+        or obj:IsA("ScrollingFrame")
+end
+
+panel.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+        local t = input.Target
+        while t and t ~= panel do
+            if isInteractive(t) then return end
+            t = t.Parent
+        end
+        dragging = true
+        dragStart = input.Position
+        startPos = panel.Position
+    end
+end)
+
+panel.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+    or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        panel.Position = UDim2.new(
+            startPos.X.Scale, startPos.X.Offset + delta.X,
+            startPos.Y.Scale, startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+-- ===== TAB BAR =====
+local tabBar = Instance.new("Frame")
+tabBar.Size = UDim2.new(0, 150, 0, 245)
+tabBar.Position = UDim2.new(0, 12, 0, 60)
+tabBar.BackgroundColor3 = BLUE_LIGHT
+tabBar.BackgroundTransparency = 0.35
+tabBar.BorderSizePixel = 0
+tabBar.ZIndex = 2
+tabBar.Active = false
+tabBar.Parent = panel
+Instance.new("UICorner", tabBar).CornerRadius = UDim.new(0, 12)
+
+local tabLayout = Instance.new("UIListLayout", tabBar)
+tabLayout.Padding = UDim.new(0, 6)
+tabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
+local tabPad = Instance.new("UIPadding", tabBar)
+tabPad.PaddingTop = UDim.new(0, 10)
+
+-- ===== CONTENT =====
+local content = Instance.new("Frame")
+content.Size = UDim2.new(1, -180, 0, 200)
+content.Position = UDim2.new(0, 168, 0, 60)
+content.BackgroundColor3 = WHITE
+content.BackgroundTransparency = 0.15
+content.BorderSizePixel = 0
+content.ZIndex = 2
+content.Active = false
+content.Parent = panel
+Instance.new("UICorner", content).CornerRadius = UDim.new(0, 12)
+
+-- ===== THEME FRAME =====
+local themeFrame = Instance.new("Frame")
+themeFrame.Size = UDim2.new(1, -24, 0, 140)
+themeFrame.Position = UDim2.new(0, 12, 1, -150)
+themeFrame.BackgroundColor3 = WHITE
+themeFrame.BackgroundTransparency = 0.15
+themeFrame.BorderSizePixel = 0
+themeFrame.ZIndex = 2
+themeFrame.Active = false
+themeFrame.Parent = panel
+Instance.new("UICorner", themeFrame).CornerRadius = UDim.new(0, 12)
+
+local themeLabel = Instance.new("TextLabel")
+themeLabel.Size = UDim2.new(1, -20, 0, 20)
+themeLabel.Position = UDim2.new(0, 10, 0, 4)
+themeLabel.BackgroundTransparency = 1
+themeLabel.FontFace = font
+themeLabel.Text = "☆ Wallpapers Coquette ☆"
+themeLabel.TextColor3 = TEXT_DARK
+themeLabel.TextSize = 13
+themeLabel.TextXAlignment = Enum.TextXAlignment.Left
+themeLabel.ZIndex = 3
+themeLabel.Parent = themeFrame
+
+local themeScroll = Instance.new("ScrollingFrame")
+themeScroll.Size = UDim2.new(1, -20, 0, 108)
+themeScroll.Position = UDim2.new(0, 10, 0, 26)
+themeScroll.BackgroundTransparency = 1
+themeScroll.BorderSizePixel = 0
+themeScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+themeScroll.ScrollBarThickness = 3
+themeScroll.ScrollBarImageColor3 = BLUE_DARK
+themeScroll.ZIndex = 3
+themeScroll.Parent = themeFrame
+
+local themeBtnLayout = Instance.new("UIGridLayout", themeScroll)
+themeBtnLayout.CellSize = UDim2.new(0, 120, 0, 30)
+themeBtnLayout.CellPadding = UDim2.new(0, 6, 0, 6)
+themeBtnLayout.SortOrder = Enum.SortOrder.LayoutOrder
+themeBtnLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    themeScroll.CanvasSize = UDim2.new(0, 0, 0, themeBtnLayout.AbsoluteContentSize.Y + 10)
+end)
+
+-- ========================================================
+--   PÁGINAS
+-- ========================================================
+local pages = {}
+
+local function createTabButton(name, order)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -16, 0, 34)
+    btn.BackgroundColor3 = WHITE
+    btn.BackgroundTransparency = 0.4
+    btn.Text = name
+    btn.FontFace = font
+    btn.TextSize = 12
+    btn.TextColor3 = TEXT_DARK
+    btn.AutoButtonColor = false
+    btn.LayoutOrder = order
+    btn.ZIndex = 3
+    btn.Parent = tabBar
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+    return btn
+end
+
+local function createPage()
+    local page = Instance.new("ScrollingFrame")
+    page.Size = UDim2.new(1, -20, 1, -20)
+    page.Position = UDim2.new(0, 10, 0, 10)
+    page.BackgroundTransparency = 1
+    page.Visible = false
+    page.CanvasSize = UDim2.new(0, 0, 0, 0)
+    page.ScrollBarThickness = 3
+    page.ScrollBarImageColor3 = BLUE_DARK
+    page.ZIndex = 3
+    page.Parent = content
+    local l = Instance.new("UIListLayout", page)
+    l.SortOrder = Enum.SortOrder.LayoutOrder
+    l.Padding = UDim.new(0, 8)
+    l.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    l:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        page.CanvasSize = UDim2.new(0, 0, 0, l.AbsoluteContentSize.Y + 10)
+    end)
+    return page
+end
+
+local function makeBtn(parent, text)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(1, -20, 0, 34)
+    b.Text = text
+    b.FontFace = font
+    b.TextSize = 10
+    b.TextColor3 = TEXT_WHITE
+    b.BackgroundColor3 = BLUE
+    b.AutoButtonColor = false
+    b.ZIndex = 4
+    b.Parent = parent
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
+    local s = Instance.new("UIStroke", b)
+    s.Color = BLUE_DARK
+    s.Thickness = 1.5
+    return b
+end
+
+local function buildPage(tabName, order)
+    local tabBtn = createTabButton(tabName, order)
+    local page = createPage()
+    pages[tabName] = {btn = tabBtn, page = page}
+    tabBtn.MouseButton1Click:Connect(function()
+        for _, p in pairs(pages) do
+            p.page.Visible = false
+            p.btn.BackgroundTransparency = 0.4
+            p.btn.TextColor3 = TEXT_DARK
+        end
+        page.Visible = true
+        tabBtn.BackgroundTransparency = 0
+        tabBtn.TextColor3 = TEXT_WHITE
+    end)
+    return page
+end
+
+local cursorPage = buildPage("✨ Cursor", 1)
+local skyboxPage = buildPage("☁ Sky", 2)
+local fogPage    = buildPage("🌫 Fog", 3)
+
+pages["✨ Cursor"].page.Visible = true
+pages["✨ Cursor"].btn.BackgroundTransparency = 0
+pages["✨ Cursor"].btn.TextColor3 = TEXT_WHITE
+
+-- ========================================================
+--   CURSOR
+-- ========================================================
+local lbl1 = Instance.new("TextLabel")
+lbl1.Size = UDim2.new(1, -20, 0, 18)
+lbl1.Text = "Nome ou ID do cursor:"
+lbl1.FontFace = font
+lbl1.TextSize = 9
+lbl1.TextColor3 = TEXT_DARK
+lbl1.BackgroundTransparency = 1
+lbl1.TextXAlignment = Enum.TextXAlignment.Left
+lbl1.ZIndex = 4
+lbl1.Parent = cursorPage
+
+local cursorInput = Instance.new("TextBox")
+cursorInput.Size = UDim2.new(1, -20, 0, 32)
+cursorInput.PlaceholderText = "ID ou link"
+cursorInput.FontFace = font
+cursorInput.TextSize = 9
+cursorInput.TextColor3 = TEXT_WHITE
+cursorInput.PlaceholderColor3 = Color3.fromRGB(230, 240, 250)
+cursorInput.BackgroundColor3 = BLUE
+cursorInput.ClearTextOnFocus = false
+cursorInput.ZIndex = 4
+cursorInput.Parent = cursorPage
+Instance.new("UICorner", cursorInput).CornerRadius = UDim.new(0, 8)
+
+cursorInput.FocusLost:Connect(function(enter)
+    if enter and cursorInput.Text ~= "" then
+        local t = cursorInput.Text
+        if not string.find(t, "rbxassetid://") and not string.find(t, "rbxthumb://") and tonumber(t) then
+            t = "rbxassetid://" .. t
+        end
+        currentCursorId = t
+        ApplyCursor()
+    end
+end)
+
+local lblSize = Instance.new("TextLabel")
+lblSize.Size = UDim2.new(1, -20, 0, 16)
+lblSize.Text = "Tamanho (0 - 100):"
+lblSize.FontFace = font
+lblSize.TextSize = 8
+lblSize.TextColor3 = TEXT_DARK
+lblSize.BackgroundTransparency = 1
+lblSize.TextXAlignment = Enum.TextXAlignment.Left
+lblSize.ZIndex = 4
+lblSize.Parent = cursorPage
+
+local sizeInput = Instance.new("TextBox")
+sizeInput.Size = UDim2.new(1, -20, 0, 28)
+sizeInput.Text = tostring(cursorSize)
+sizeInput.FontFace = font
+sizeInput.TextSize = 9
+sizeInput.TextColor3 = TEXT_WHITE
+sizeInput.BackgroundColor3 = BLUE
+sizeInput.ClearTextOnFocus = false
+sizeInput.ZIndex = 4
+sizeInput.Parent = cursorPage
+Instance.new("UICorner", sizeInput).CornerRadius = UDim.new(0, 8)
+
+sizeInput.FocusLost:Connect(function()
+    local v = tonumber(sizeInput.Text)
+    if v then
+        cursorSize = math.clamp(v, 0, 100)
+        sizeInput.Text = tostring(cursorSize)
+        ApplyCursor()
+    else
+        sizeInput.Text = tostring(cursorSize)
+    end
+end)
+
+local gridHolder = Instance.new("Frame")
+gridHolder.Size = UDim2.new(1, -20, 0, 150)
+gridHolder.BackgroundTransparency = 1
+gridHolder.ZIndex = 4
+gridHolder.Parent = cursorPage
+
+local grid = Instance.new("UIGridLayout", gridHolder)
+grid.CellSize = UDim2.new(0, 42, 0, 42)
+grid.CellPadding = UDim2.new(0, 6, 0, 6)
+grid.HorizontalAlignment = Enum.HorizontalAlignment.Center
+grid:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    gridHolder.Size = UDim2.new(1, -20, 0, grid.AbsoluteContentSize.Y + 10)
+end)
+
+for _, data in ipairs(Cursors) do
+    local ib = Instance.new("ImageButton")
+    ib.Size = UDim2.new(0, 42, 0, 42)
+    ib.BackgroundColor3 = BLUE
+    ib.ScaleType = Enum.ScaleType.Fit
+    ib.ZIndex = 4
+    ib.Parent = gridHolder
+    Instance.new("UICorner", ib).CornerRadius = UDim.new(0, 8)
+    ib.Image = data.Id
+
+    ib.MouseButton1Click:Connect(function()
+        currentCursorId = data.Id
+        cursorInput.Text = data.Name
+        ApplyCursor()
+    end)
+end
+
+-- ========================================================
+--   SKY
+-- ========================================================
+local function addSkyButton(name, callback)
+    local b = makeBtn(skyboxPage, name)
+    b.MouseButton1Click:Connect(callback)
+end
+
+addSkyButton("Reset Sky 🔄", ClearSkies)
+addSkyButton("Goodnight Sky🌠", function() ClearSkies(); local s = game:GetObjects("rbxassetid://9848172808")[1]; if s then s.Parent = Lighting end end)
+addSkyButton("Space Blue💧", function() ClearSkies(); local s = game:GetObjects("rbxassetid://110721469926251")[1]; if s then s.Parent = Lighting end end)
+addSkyButton("Emo Sky💀", function() ClearSkies(); local s = game:GetObjects("rbxassetid://106377173007538")[1]; if s then s.Parent = Lighting end end)
+addSkyButton("Red Cloud Sky🩸", function() ClearSkies(); local s = game:GetObjects("rbxassetid://136055162054954")[1]; if s then s.Parent = Lighting end end)
+addSkyButton("Aurora Sky🌌", function() ClearSkies(); local s = game:GetObjects("rbxassetid://86047318924047")[1]; if s then s.Parent = Lighting end end)
+addSkyButton("Pink Sunrise Sky💗", function() ClearSkies(); local s = game:GetObjects("rbxassetid://102712197652880")[1]; if s then s.Parent = Lighting end end)
+addSkyButton("Hades Sky 👺", function() ClearSkies(); local s = game:GetObjects("rbxassetid://11730863818")[1]; if s then s.Parent = Lighting end end)
+
+addSkyButton("Spooky Sky👻", function()
+    SetCustom6Sky({Bk="rbxassetid://87967125504678",Dn="rbxassetid://99948314010718",Ft="rbxassetid://131333613950625",Lf="rbxassetid://86435422447872",Rt="rbxassetid://110806247796360",Up="rbxassetid://94221824992515"})
+end)
+
+addSkyButton("Apple Jack Sky🍎", function()
+    SetCustom6Sky({Bk="rbxassetid://82808455277415",Dn="rbxassetid://95291741443754",Ft="rbxassetid://112101406433040",Lf="rbxassetid://114535847152295",Rt="rbxassetid://70437680826929",Up="rbxassetid://123557920456536"})
+end)
+
+addSkyButton("Melody Sky 🎶", function()
+    SetCustom6Sky({Bk="rbxassetid://139844427143659",Dn="rbxassetid://123648101830800",Ft="rbxassetid://126411388718422",Lf="rbxassetid://86046415976082",Rt="rbxassetid://110938737354251",Up="rbxassetid://135279992658427"})
+end)
+
+addSkyButton("Sky Kuromi👾", function()
+    SetCustom6Sky({Bk="rbxassetid://70452413404770",Dn="rbxassetid://123427371005731",Ft="rbxassetid://88489220146042",Lf="rbxassetid://122589234533772",Rt="rbxassetid://116202549075645",Up="rbxassetid://83605197436509"})
+end)
+
+addSkyButton("Cinnamoroll💙", function()
+    SetCustom6Sky({Bk="rbxassetid://89366633020960",Dn="rbxassetid://116309195857720",Ft="rbxassetid://120341099215321",Lf="rbxassetid://91812928190255",Rt="rbxassetid://94423580805320",Up="rbxassetid://110878880655531"})
+end)
+
+addSkyButton("Chococat Sky🐱🍫", function()
+    SetCustom6Sky({Bk="rbxassetid://122934223825685",Dn="rbxassetid://123427371005731",Ft="rbxassetid://127432502457919",Lf="rbxassetid://118552411654693",Rt="rbxassetid://79507204666851",Up="rbxassetid://90208876152081"})
+end)
+
+addSkyButton("Hello Kitty Christmas🎄", function()
+    SetCustom6Sky({Bk="rbxassetid://135297280579161",Dn="rbxassetid://76872220095611",Ft="rbxassetid://133452089641107",Lf="rbxassetid://104464782805839",Rt="rbxassetid://88627908709078",Up="rbxassetid://82728976669867"})
+end)
+
+addSkyButton("Billie Eilish Sky🎵🖤", function()
+    local sky = SetCustom6Sky({
+        Bk="rbxassetid://96872763324980",
+        Dn="rbxassetid://136699999413389",
+        Ft="rbxassetid://90547004293864",
+        Lf="rbxassetid://93704506246640",
+        Rt="rbxassetid://86195794785935",
+        Up="rbxassetid://71481407456803"
+    })
+    if sky then
+        sky.CelestialBodiesShown = false
+        sky.StarCount = 0
+        sky.SunAngularSize = 0
+        sky.MoonAngularSize = 0
+    end
+end)
+
+-- ========================================================
+--   FOG
+-- ========================================================
+local fogColorBtn = makeBtn(fogPage, "FOG COLOR: " .. names[cIdx])
+fogColorBtn.MouseButton1Click:Connect(function()
+    cIdx = (cIdx % #colors) + 1
+    fogColorBtn.Text = "FOG COLOR: " .. names[cIdx]
+end)
+
+local fogInput = Instance.new("TextBox")
+fogInput.Size = UDim2.new(1, -20, 0, 30)
+fogInput.Text = tostring(fogValue)
+fogInput.FontFace = font
+fogInput.TextSize = 12
+fogInput.TextColor3 = BLUE_DARK
+fogInput.BackgroundColor3 = Color3.fromRGB(240, 248, 255)
+fogInput.ClearTextOnFocus = false
+fogInput.ZIndex = 4
+fogInput.Parent = fogPage
+Instance.new("UICorner", fogInput).CornerRadius = UDim.new(0, 8)
+
+local sliderBg = Instance.new("Frame")
+sliderBg.Size = UDim2.new(1, -20, 0, 10)
+sliderBg.BackgroundColor3 = Color3.fromRGB(220, 235, 250)
+sliderBg.ZIndex = 4
+sliderBg.Parent = fogPage
+Instance.new("UICorner", sliderBg).CornerRadius = UDim.new(0, 5)
+
+local sliderFill = Instance.new("Frame")
+sliderFill.Size = UDim2.new(fogValue / fogMax, 0, 1, 0)
+sliderFill.BackgroundColor3 = BLUE
+sliderFill.ZIndex = 5
+sliderFill.Parent = sliderBg
+Instance.new("UICorner", sliderFill).CornerRadius = UDim.new(0, 5)
+
+local sliderKnob = Instance.new("TextButton")
+sliderKnob.Size = UDim2.new(0, 18, 0, 18)
+sliderKnob.Position = UDim2.new(fogValue / fogMax, -9, 0.5, -9)
+sliderKnob.BackgroundColor3 = BLUE_DARK
+sliderKnob.Text = ""
+sliderKnob.ZIndex = 6
+sliderKnob.Parent = sliderBg
+Instance.new("UICorner", sliderKnob).CornerRadius = UDim.new(1, 0)
+
+local function updateFog(v)
+    fogValue = math.clamp(v, 0, fogMax)
+    fogInput.Text = tostring(math.floor(fogValue))
+    local pct = fogValue / fogMax
+    sliderFill.Size = UDim2.new(pct, 0, 1, 0)
+    sliderKnob.Position = UDim2.new(pct, -9, 0.5, -9)
+end
+
+sliderKnob.MouseButton1Down:Connect(function() fogDrag = true end)
+sliderKnob.InputBegan:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+        fogDrag = true
+    end
+end)
+sliderBg.InputBegan:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+        fogDrag = true
+        local pct = math.clamp((UserInputService:GetMouseLocation().X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X, 0, 1)
+        updateFog(pct * fogMax)
+    end
+end)
+UserInputService.InputEnded:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+        fogDrag = false
+    end
+end)
+fogInput.FocusLost:Connect(function()
+    local n = tonumber(fogInput.Text)
+    if n then updateFog(n) else fogInput.Text = tostring(math.floor(fogValue)) end
+end)
+RunService.RenderStepped:Connect(function()
+    if fogDrag then
+        local pct = math.clamp((UserInputService:GetMouseLocation().X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X, 0, 1)
+        updateFog(pct * fogMax)
+    end
+    Lighting.FogEnd = fogValue
+    Lighting.FogStart = 0
+    Lighting.FogColor = colors[cIdx]
+end)
+
+-- ========================================================
+--   THEMES
+-- ========================================================
+local themeButtons = {}
+
+local function applyTheme(index)
+    if index == nil then
+        bg.Image = ""
+        bg.ImageTransparency = 1
+        for _, b in ipairs(themeButtons) do b.BackgroundColor3 = BLUE end
+        return
+    end
+    local theme = THEMES[index]
+    if not theme then return end
+    bg.Image = themeImg(theme.id)
+    bg.ImageTransparency = 0
+    for i, b in ipairs(themeButtons) do
+        if i == index then b.BackgroundColor3 = BLUE_DARK else b.BackgroundColor3 = BLUE end
+    end
+end
+
+local resetTheme = Instance.new("TextButton")
+resetTheme.Size = UDim2.new(0, 120, 0, 30)
+resetTheme.BackgroundColor3 = Color3.fromRGB(200, 220, 245)
+resetTheme.Text = "Reset 🔄"
+resetTheme.FontFace = font
+resetTheme.TextSize = 10
+resetTheme.TextColor3 = TEXT_DARK
+resetTheme.AutoButtonColor = false
+resetTheme.LayoutOrder = 0
+resetTheme.ZIndex = 4
+resetTheme.Parent = themeScroll
+Instance.new("UICorner", resetTheme).CornerRadius = UDim.new(0, 8)
+local rs = Instance.new("UIStroke", resetTheme)
+rs.Color = BLUE_DARK
+rs.Thickness = 1.5
+resetTheme.MouseButton1Click:Connect(function() applyTheme(nil) end)
+
+for i, theme in ipairs(THEMES) do
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 120, 0, 30)
+    btn.BackgroundColor3 = BLUE
+    btn.Text = theme.name .. " ☆"
+    btn.FontFace = font
+    btn.TextSize = 10
+    btn.TextColor3 = TEXT_WHITE
+    btn.AutoButtonColor = false
+    btn.LayoutOrder = i
+    btn.ZIndex = 4
+    btn.Parent = themeScroll
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+    local s = Instance.new("UIStroke", btn)
+    s.Color = BLUE_DARK
+    s.Thickness = 1.5
+    table.insert(themeButtons, btn)
+    btn.MouseButton1Click:Connect(function() applyTheme(i) end)
+end
+
+applyTheme(1)
+
+-- ========================================================
+--   BOLINHA
+-- ========================================================
+local toggleDragging = false
+local toggleDragStart, toggleStartPos, toggleMoved
+toggle.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        toggleDragging = true
+        toggleMoved = false
+        toggleDragStart = input.Position
+        toggleStartPos = toggle.Position
+    end
+end)
+toggle.InputChanged:Connect(function(input)
+    if toggleDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - toggleDragStart
+        if math.abs(delta.X) > 5 or math.abs(delta.Y) > 5 then toggleMoved = true end
+        toggle.Position = UDim2.new(toggleStartPos.X.Scale, toggleStartPos.X.Offset + delta.X, toggleStartPos.Y.Scale, toggleStartPos.Y.Offset + delta.Y)
+    end
+end)
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if toggleDragging then
+            toggleDragging = false
+            if not toggleMoved then
+                panel.Visible = not panel.Visible
+            end
+        end
+    end
+end)
+
+print("☆ Devy Coquette Blue carregado! + White Star + Teal Star + Purple Bow ☆")
